@@ -24,12 +24,17 @@
 
 using namespace std;
 
-char current;				// Current car	
+char current = EOF;				// Current car
+char nextcar;				// Next car
 
 void ReadChar(void){		// Read character and skip spaces until 
 				// non space character is read
-	while(cin.get(current) && (current==' '||current=='\t'||current=='\n'))
-	   	cin.get(current);
+	if(current == EOF)
+		cin.get(nextcar);
+	do{
+	   	current = nextcar;
+		cin.get(nextcar);
+	}while(current!= EOF &&(current==' '||current=='\t'||current=='\n'));
 }
 
 void Error(string s){
@@ -37,19 +42,15 @@ void Error(string s){
 	exit(-1);
 }
 
-// ArithmeticExpression := Term {AdditiveOperator Term}
-// Term := Digit | "(" ArithmeticExpression ")"
-// AdditiveOperator := "+" | "-"
-// Digit := "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"
-
-	
+// AdditiveOperator := "+" | "-"	
 void AdditiveOperator(void){
 	if(current=='+'||current=='-')
 		ReadChar();
 	else
 		Error("Opérateur additif attendu");	   // Additive operator expected
 }
-		
+
+// Digit := "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"		
 void Digit(void){
 	if((current<'0')||(current>'9'))
 		Error("Chiffre attendu");		   // Digit expected
@@ -61,6 +62,7 @@ void Digit(void){
 
 void ArithmeticExpression(void);			// Called by Term() and calls Term()
 
+// Term := Digit | "(" ArithmeticExpression ")"
 void Term(void){
 	if(current=='('){
 		ReadChar();
@@ -77,6 +79,7 @@ void Term(void){
 			Error("'(' ou chiffre attendu");
 }
 
+// ArithmeticExpression := Term {AdditiveOperator Term}
 void ArithmeticExpression(void){
 	char adop;
 	Term();
@@ -95,6 +98,32 @@ void ArithmeticExpression(void){
 
 }
 
+// <OpérateurRelationnel> ::= '=' | '<' | '>' | '<=' | '>=' | '<>'
+void OpérateurRelationnel(void){
+	if(current=='<'||current=='>'){
+		if (nextcar=='=')
+			ReadChar();
+	}else if (current=='='||current=='<'||current=='>')
+		ReadChar();
+	else if (current=='<'){
+		if (nextcar=='>')
+			ReadChar();
+	}else
+		Error("Opérateur Relationnel attendu");	   // Relationnel operator expected
+}
+
+// <expression> ::= <ExpressionArithmétique> | <ExpressionArithmétique> <OpérateurRelationnel> <ExpressionArithmétique> 
+void Expression(void){
+	ArithmeticExpression();
+	ReadChar();
+	if (current=='='||current=='<'||current=='>'){
+		OpérateurRelationnel();
+		ArithmeticExpression();
+	}
+}
+
+
+
 int main(void){	// First version : Source code on standard input and assembly code on standard output
 	// Header for gcc assembler / linker
 	cout << "\t\t\t# This code was produced by the CERI Compiler"<<endl;
@@ -105,7 +134,7 @@ int main(void){	// First version : Source code on standard input and assembly co
 
 	// Let's proceed to the analysis and code production
 	ReadChar();
-	ArithmeticExpression();
+	Expression();
 	ReadChar();
 	// Trailer for the gcc assembler / linker
 	cout << "\tmovq %rbp, %rsp\t\t# Restore the position of the stack's top"<<endl;
