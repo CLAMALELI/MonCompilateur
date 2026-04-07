@@ -42,10 +42,11 @@ void Error(string s){
 	exit(-1);
 }
 
-// AdditiveOperator := "+" | "-"	
+// AdditiveOperator := "+" | "-" | "||"	
 void AdditiveOperator(void){
-	if(current=='+'||current=='-')
+	if(current=='+'||current=='-' || (current == '|' && nextcar == '|')){
 		ReadChar();
+	}
 	else
 		Error("Opérateur additif attendu");	   // Additive operator expected
 }
@@ -57,6 +58,34 @@ void Digit(void){
 	else{
 		cout << "\tpush $"<<current<<endl;
 		ReadChar();
+	}
+}
+
+// Number := Digit{Digit}
+void Number(void){
+	Digit();
+	while(current>='0' && current <='9'){
+		Digit();
+	}
+}
+
+
+// MultiplicativeOperator := "*" | "/" | "%" | "&&"
+void MultiplicativeOperator(void){
+	if(current=='*'||current=='/' ||current=='%' || (current == '&' && nextcar == '&')){
+		ReadChar();
+	}
+	else
+		Error("Opérateur additif attendu");	   // Additive operator expected
+}
+
+// Letter := "a"|...|"z" | "A"|...|"Z"
+void Letter(void){
+	if ((current >='A' && current<='Z')||(current >='a' && current<='z')){
+		cout << "\tpush $"<<current<<endl;
+		ReadChar();
+	}else{
+		Error("Lettre attendu");	   // Lettre expected
 	}
 }
 
@@ -98,18 +127,29 @@ void ArithmeticExpression(void){
 
 }
 
-// <OpérateurRelationnel> ::= '=' | '<' | '>' | '<=' | '>=' | '<>'
+// <OpérateurRelationnel> ::= '<' | '>' | '<=' | '>=' | '<>' | '==' | '!='
 void OpérateurRelationnel(void){
 	if(current=='<'||current=='>'){
-		if (nextcar=='=')
+		if (nextcar=='='){
 			ReadChar();
-	}else if (current=='='||current=='<'||current=='>')
-		ReadChar();
-	else if (current=='<'){
+		}else if (nextcar=='<'||nextcar=='>') {
+			ReadChar();
+		}else{
+			ReadChar();
+		}
+	}else if (current=='<'){
 		if (nextcar=='>')
 			ReadChar();
-	}else
+	}else if (current=='=' || current=='!'){
+		if (nextcar=='='){
+			ReadChar();
+		}else{
+			ReadChar();
+		}
+	}else{
+		cerr<<"current : "<<current<<"nextcar : "<<nextcar<<endl;
 		Error("Opérateur Relationnel attendu");	   // Relationnel operator expected
+	}
 }
 
 // <expression> ::= <ExpressionArithmétique> | <ExpressionArithmétique> <OpérateurRelationnel> <ExpressionArithmétique> 
@@ -121,6 +161,113 @@ void Expression(void){
 		ArithmeticExpression();
 	}
 }
+
+// Factor := Number | Letter | "(" Expression ")"| "!" Factor
+void Factor(void){
+	if (current>='0' && current <='9'){
+		Number();
+	}
+	else if ((current >='A' && current<='Z')||(current >='a' && current<='z')){
+		Letter();
+	}
+	else if (current == '('){
+		ReadChar();
+		Expression();
+		if (current == ')'){
+			ReadChar();
+		}
+		else{
+			Error("')' était attendu");		// ")" expected
+		}
+
+	}
+	else if (current == '!'){
+		Factor();
+	}
+	else{
+		Error("Facteur attendu");	   // Facteur expected
+	}
+}
+
+// AssignementStatement := Letter "=" Expression
+void AssignementStatement(void){
+	if (current>='0' && current <='9'){
+		Letter();
+		if (current == '='){
+			Expression();
+		}
+		else{
+			Error("'=' était attendu");		// "=" expected
+		}
+	}else{
+			Error("lettre attendu");		// Lettre expected
+		}
+}
+
+// DeclarationPart := "[" Letter {"," Letter} "]"
+void DeclarationPart(void){
+	if (current == '['){
+		ReadChar();
+		if (current>='0' && current <='9'){
+			Letter();
+				if (current == ','){
+					ReadChar();
+					if (current>='0' && current <='9'){
+						Letter();
+							if (current == ']'){
+								ReadChar();
+							}else{
+								Error("']' était attendu");		// "]" expected
+							}
+					}else{
+						if (current == ']'){
+							ReadChar();
+						}else{
+							Error("']' était attendu");		// "]" expected
+						}
+					}
+				}else{
+					Error("',' était attendu");		// "," expected
+				}
+		}else{
+			Error("lettre attendu");		// Lettre expected
+		}
+	}
+	else{
+		Error("'[' était attendu");		// "[" expected
+	}
+}
+
+// Statement := AssignementStatement
+void Statement(void){
+	AssignementStatement();
+}
+
+// StatementPart := Statement {";" Statement} "."
+void StatementPart(void){
+	Statement();
+	if (current == ';'){
+		ReadChar();
+		Statement();
+	}
+	if (current != '.'){
+		Error("'.' était attendu");		// "." expected
+	}
+}
+
+// Program := [DeclarationPart] StatementPart
+void Program(void){
+	if (current == '['){
+		DeclarationPart();
+		
+	}
+	StatementPart();
+}
+
+
+// Expression := SimpleExpression [RelationalOperator SimpleExpression]
+// SimpleExpression := Term {AdditiveOperator Term}
+// Term := Factor {MultiplicativeOperator Factor}
 
 
 
