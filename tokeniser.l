@@ -32,6 +32,16 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 
 %%
 
+"BEGIN" return BEG;
+"END" return END;
+"FOR" return FOR;
+"TO" return TO;
+"DO" return DO;
+"ELSE" return ELSE;
+"IF" return IF;
+"WHILE" return WHILE;
+"THEN" return THEN;
+
 {addop}		return ADDOP;
 {mulop}		return MULOP;
 {relop}		return RELOP;

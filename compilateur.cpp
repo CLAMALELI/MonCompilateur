@@ -299,9 +299,89 @@ void AssignementStatement(void){
 	cout << "\tpop "<<variable<<endl;
 }
 
-// Statement := AssignementStatement
+void Statement(void);
+
+//BlockStatement := "BEGIN" Statement { ";" Statement } "END"
+void BlockStatement(void){
+	if (lexer->yylex() == BEG){
+		Statement();
+		while (current == SEMICOLON){
+			lexer->YYText();
+			Statement();
+		}
+		if (lexer->yylex() != END){
+			Error("END requit");
+		}
+	}else{
+		Error("Begin requit");
+	}
+}
+
+//ForStatement := "FOR" AssignementStatement "To" Expression "DO" Statement
+void ForStatement(void){
+	if (lexer->yylex() == FOR){
+		AssignementStatement();
+		if (lexer->yylex() == TO){
+			Expression();
+			if (lexer->yylex() == DO){
+				Statement();
+			}else{
+				Error("DO requit");
+			}
+		}else{
+			Error("TO requit");
+		}
+	}else{
+		Error("FOR requit");
+	}
+}
+
+//WhileStatement := "WHILE" Expression "DO" Statement
+void WhileStatement(void){
+	if (lexer->yylex() == WHILE){
+		Expression();
+		if (lexer->yylex() == DO){
+			Statement();
+		}else{
+			Error("DO requit");
+		}
+	}else{
+		Error("While requit");
+	}
+}
+
+//IfStatement := "IF" Expression "THEN" Statement [ "ELSE" Statement ]
+void IfStatement(void){
+	if (lexer->yylex() == IF){
+		Expression();
+		if (lexer->yylex() == THEN){
+			Statement();
+			if (lexer->yylex() == ELSE){
+				Statement();
+			}
+		}else{
+			Error("THEN requit");
+		}
+	}else{
+		Error("IF requit");
+	}
+}
+
+//Statement := AssignementStatement | IfStatement | WhileStatement | ForStatement | BlockStatement
 void Statement(void){
-	AssignementStatement();
+	if (current == ID){
+		AssignementStatement();
+	}else if (lexer->yylex() == IF){
+		IfStatement();
+	}else if (lexer->yylex() == WHILE){
+		WhileStatement();
+	}else if (lexer->yylex() == FOR){
+		ForStatement();
+	}else if (lexer->yylex() == BEG){
+		BlockStatement();
+	}else{
+		Error("Absence de mot clé");
+	}
 }
 
 // StatementPart := Statement {";" Statement} "."
