@@ -1,21 +1,20 @@
-//  A compiler from a very simple Pascal-like structured language LL(k)
-//  to 64-bit 80x86 Assembly langage
-//  Copyright (C) 2019 Pierre Jourlin
+// A compiler from a very simple Pascal-like structured language LL(k)
+// to 64-bit 80x86 Assembly langage
+// Copyright (C) 2019 Pierre Jourlin
 //
-//  This program is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
-//  
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//  
-//  You should have received a copy of the GNU General Public License
-//  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-// Build with "make compilateur"
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+// Build with "make compilateur" 
 
 
 #include <string>
@@ -24,91 +23,87 @@
 
 using namespace std;
 
-char current = EOF;				// Current car
-char nextcar;				// Next car
+char current = EOF;             
+char nextcar;               
 
-void ReadChar(void){		// Read character and skip spaces until 
-				// non space character is read
-	if(current == EOF)
-		cin.get(nextcar);
-	do{
-	   	current = nextcar;
-		cin.get(nextcar);
-	}while(current!= EOF &&(current==' '||current=='\t'||current=='\n'));
+void ReadChar(void){        
+    if(current == EOF)
+        cin.get(nextcar);
+    do{
+        current = nextcar;
+        cin.get(nextcar);
+    }while(current!= EOF &&(current==' '||current=='\t'||current=='\n'||current=='\r'));
 }
 
 void Error(string s){
-	cerr<< s << endl;
-	exit(-1);
+    cerr << s << "  , current : "<< current << endl;
+    exit(-1);
 }
 
-// AdditiveOperator := "+" | "-" | "||"	
+void Expression(void);
+void Term(void);
+void Factor(void);
+void SimpleExpression(void);
+
+// AdditiveOperator := "+" | "-" | "||" 
 void AdditiveOperator(void){
-	if(current=='+'||current=='-' || (current == '|' && nextcar == '|')){
-		ReadChar();
-	}
-	else
-		Error("Opérateur additif attendu");	   // Additive operator expected
+    if(current=='+'||current=='-'){
+        ReadChar();
+    } else if (current == '|' && nextcar == '|') {
+        ReadChar();
+        ReadChar();
+    } else {
+        Error("Opérateur additif attendu");
+    }
 }
 
-// Digit := "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"		
+// Digit := "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"     
 void Digit(void){
-	if((current<'0')||(current>'9'))
-		Error("Chiffre attendu");		   // Digit expected
-	else{
-		cout << "\tpush $"<<current<<endl;
-		ReadChar();
-	}
+    if((current < '0') || (current > '9'))
+        Error("Chiffre attendu");
+    else {
+        ReadChar();
+    }
 }
 
 // Number := Digit{Digit}
-void Number(void){
-	Digit();
-	while(current>='0' && current <='9'){
-		Digit();
+void Number(void) {
+    int val = 0;
+    if (current >= '0' || current <= '9'){
+		val = (current - '0');
+		ReadChar();
+		while (current >= '0' && current <= '9') {
+        	val = val * 10 + (current - '0');
+        	ReadChar();
+    	}
+	}else{
+		Error("Chiffre attendu1");
 	}
+    cout << "\tpushq $" << val << endl; 
 }
-
 
 // MultiplicativeOperator := "*" | "/" | "%" | "&&"
 void MultiplicativeOperator(void){
-	if(current=='*'||current=='/' ||current=='%' || (current == '&' && nextcar == '&')){
-		ReadChar();
-	}
-	else
-		Error("Opérateur additif attendu");	   // Additive operator expected
+    if(current=='*'||current=='/' ||current=='%'){
+        ReadChar();
+    } else if (current == '&' && nextcar == '&') {
+        ReadChar();
+        ReadChar();
+    } else {
+        Error("Opérateur multiplicatif attendu");
+    }
 }
 
-// Letter := "a"|...|"z" | "A"|...|"Z"
+// Letter := "A"|...|"Z" || "a"|...|"z"
 void Letter(void){
-	if ((current >='A' && current<='Z')||(current >='a' && current<='z')){
-		cout << "\tpush $"<<current<<endl;
+    if ((current >= 'A' && current <= 'Z') || (current >= 'a' && current <= 'z')){
+        cout << "\tpushq $" << current << endl;
 		ReadChar();
-	}else{
-		Error("Lettre attendu");	   // Lettre expected
-	}
+    } else {
+        Error("Lettre attendueLe");
+    }
 }
 
-void ArithmeticExpression(void);			// Called by Term() and calls Term()
-
-// Term := Digit | "(" ArithmeticExpression ")"
-void Term(void){
-	if(current=='('){
-		ReadChar();
-		ArithmeticExpression();
-		if(current!=')')
-			Error("')' était attendu");		// ")" expected
-		else
-			ReadChar();
-	}
-	else 
-		if (current>='0' && current <='9')
-			Digit();
-	     	else
-			Error("'(' ou chiffre attendu");
-}
-
-// ArithmeticExpression := Term {AdditiveOperator Term}
 void ArithmeticExpression(void){
 	char adop;
 	Term();
@@ -127,175 +122,202 @@ void ArithmeticExpression(void){
 
 }
 
-// <OpérateurRelationnel> ::= '<' | '>' | '<=' | '>=' | '<>' | '==' | '!='
-void OpérateurRelationnel(void){
-	if(current=='<'||current=='>'){
-		if (nextcar=='='){
-			ReadChar();
-		}else if (nextcar=='<'||nextcar=='>') {
-			ReadChar();
-		}else{
-			ReadChar();
-		}
-	}else if (current=='<'){
-		if (nextcar=='>')
-			ReadChar();
-	}else if (current=='=' || current=='!'){
-		if (nextcar=='='){
-			ReadChar();
-		}else{
-			ReadChar();
-		}
-	}else{
-		cerr<<"current : "<<current<<"nextcar : "<<nextcar<<endl;
-		Error("Opérateur Relationnel attendu");	   // Relationnel operator expected
+
+// <RelationalOperator> ::= '<' | '>' | '<=' | '>=' | '==' | '!='
+string RelationalOperator(void){
+    if(current!='<'&&current!='>'&&current!='!'&&current!='='){
+		return NULL;
 	}
+	if(nextcar=='='){
+		switch(current){
+			case '=':
+				ReadChar(); ReadChar(); 
+				return "equ";
+			case '!': 
+				ReadChar(); ReadChar(); 
+				return "diff";
+			case '<': 
+				ReadChar(); ReadChar(); 
+				return "infe";
+			case '>': 
+				ReadChar(); ReadChar(); 
+				return "supe";
+		}
+	}
+	switch(current){
+		case '<':	ReadChar();
+				return "inf";
+		case '>':	ReadChar();
+				return "sup";
+		default:	Error("opérateur relationnel inconnu");
+		
+	}
+	return NULL;
 }
 
-// <expression> ::= <ExpressionArithmétique> | <ExpressionArithmétique> <OpérateurRelationnel> <ExpressionArithmétique> 
-void Expression(void){
-	ArithmeticExpression();
-	ReadChar();
-	if (current=='='||current=='<'||current=='>'){
-		OpérateurRelationnel();
-		ArithmeticExpression();
-	}
-}
-
-// Factor := Number | Letter | "(" Expression ")"| "!" Factor
+// Factor := Number | Letter | "(" Expression ")" | "!" Factor
 void Factor(void){
-	if (current>='0' && current <='9'){
-		Number();
-	}
-	else if ((current >='A' && current<='Z')||(current >='a' && current<='z')){
-		Letter();
-	}
-	else if (current == '('){
-		ReadChar();
-		Expression();
-		if (current == ')'){
-			ReadChar();
-		}
-		else{
-			Error("')' était attendu");		// ")" expected
+    if (current >= '0' && current <= '9'){
+        Number();
+    }
+    else if ((current >= 'A' && current <= 'Z') || (current >= 'a' && current <= 'z')){
+        Letter();
+    }
+    else if (current == '('){
+        ReadChar();
+        Expression();
+        if (current == ')') ReadChar();
+        else Error("')' attendue");
+    }
+    else if (current == '!'){
+        ReadChar();
+        Factor();
+    }
+    else {
+        Error("Facteur attendu");
+    }
+}
+
+// Term := Factor {MultiplicativeOperator Factor}
+void Term(void){
+	char ope;
+    Factor();
+    while(current=='*'||current=='/' || current=='%' || (current == '&' && nextcar == '&')){
+		ope = current;
+        MultiplicativeOperator();
+        Factor();
+		cout << "\tpop %rbx"<<endl;
+		cout << "\tpop %rax"<<endl;
+
+		switch(ope){
+			case '*':
+				cout << "\timulq %rbx, %rax" << endl;
+                cout << "\tpushq %rax" << endl;
+                break;
+			case '&':
+				cout << "\tmulq	%rbx"<<endl;
+				cout << "\tpush %rax"<<endl;
+				break;
+			case '/':
+				cout << "\tmovq $0, %rdx"<<endl;  
+				cout << "\tdiv %rbx"<<endl;	
+				cout << "\tpush %rax"<<endl;
+				break;
+			case '%':
+				cout << "\tmovq $0, %rdx"<<endl;
+				cout << "\tdiv %rbx"<<endl;
+				cout << "\tpush %rdx"<<endl;
+				break;
+			default:
+				Error("opérateur additif attendu");
 		}
 
-	}
-	else if (current == '!'){
-		Factor();
-	}
-	else{
-		Error("Facteur attendu");	   // Facteur expected
-	}
+    }
+}
+
+// SimpleExpression := Term {AdditiveOperator Term}
+void SimpleExpression(void){
+	char Sexpr;
+    Term();
+    while(current=='+'||current=='-' || (current == '|' && nextcar == '|')){
+		Sexpr=current;
+        AdditiveOperator();
+        Term();
+
+		cout << "\tpop %rbx"<<endl;
+		cout << "\tpop %rax"<<endl;
+		if(Sexpr=='+')
+			cout << "\taddq	%rbx, %rax"<<endl;
+		else
+			cout << "\tsubq	%rbx, %rax"<<endl;
+		cout << "\tpush %rax"<<endl;	
+
+    }
+}
+
+// Expression := SimpleExpression [RelationalOperator SimpleExpression]
+void Expression(void){
+	char expr2;
+    SimpleExpression();
+    if(current == '<' || current == '>' || current == '=' || (current == '!' && nextcar == '=')){
+        RelationalOperator();
+        SimpleExpression();
+    }
 }
 
 // AssignementStatement := Letter "=" Expression
 void AssignementStatement(void){
-	if (current>='0' && current <='9'){
-		Letter();
-		if (current == '='){
-			Expression();
-		}
-		else{
-			Error("'=' était attendu");		// "=" expected
-		}
-	}else{
-			Error("lettre attendu");		// Lettre expected
-		}
+    if ((current >= 'A' && current <= 'Z') || (current >= 'a' && current <= 'z')){
+        Letter();
+        if (current == '='){
+            ReadChar();
+            Expression();
+        } else Error("'=' attendu");
+    } else Error("Lettre attendue");
+}
+
+//Statement := AssignementStatement
+void Statement(void){
+    AssignementStatement();
 }
 
 // DeclarationPart := "[" Letter {"," Letter} "]"
 void DeclarationPart(void){
-	if (current == '['){
-		ReadChar();
-		if (current>='0' && current <='9'){
-			Letter();
-				if (current == ','){
-					ReadChar();
-					if (current>='0' && current <='9'){
-						Letter();
-							if (current == ']'){
-								ReadChar();
-							}else{
-								Error("']' était attendu");		// "]" expected
-							}
-					}else{
-						if (current == ']'){
-							ReadChar();
-						}else{
-							Error("']' était attendu");		// "]" expected
-						}
-					}
-				}else{
-					Error("',' était attendu");		// "," expected
-				}
-		}else{
-			Error("lettre attendu");		// Lettre expected
-		}
-	}
-	else{
-		Error("'[' était attendu");		// "[" expected
-	}
-}
+    if (current == '['){
+		cout << "\t.data"<<endl;
+		cout << "\t.align 8"<<endl;
 
-// Statement := AssignementStatement
-void Statement(void){
-	AssignementStatement();
+		ReadChar();
+		if ((current >= 'A' && current <= 'Z') || (current >= 'a' && current <= 'z')){
+			cout << current << ":\t.quad 0"<<endl;
+			Letter();
+			while (current == ','){
+				ReadChar();
+				if ((current >= 'A' && current <= 'Z') || (current >= 'a' && current <= 'z')){
+					cout << current << ":\t.quad 0"<<endl;
+					ReadChar();
+					
+				}
+    		}
+		}
+    	if (current == ']') {
+			ReadChar();
+		}else Error("']' attendu");
+	}
 }
 
 // StatementPart := Statement {";" Statement} "."
 void StatementPart(void){
-	Statement();
-	if (current == ';'){
-		ReadChar();
-		Statement();
-	}
-	if (current != '.'){
-		Error("'.' était attendu");		// "." expected
-	}
+    Statement();
+    while (current == ';'){
+        ReadChar();
+        Statement();
+    }
+    if (current != '.') Error("'.' attendu");
 }
 
 // Program := [DeclarationPart] StatementPart
 void Program(void){
-	if (current == '['){
+    if (current == '[') {
 		DeclarationPart();
-		
 	}
 	StatementPart();
 }
 
+int main(void){
+    cout << "\t\t\t# Code produit par le compilateur" << endl;
+    cout << "\t.text" << endl;
+    cout << "\t.globl main" << endl;
+    cout << "main:" << endl;
+    cout << "\tpush %rbp" << endl;
+    cout << "\tmovq %rsp, %rbp" << endl;
 
-// Expression := SimpleExpression [RelationalOperator SimpleExpression]
-// SimpleExpression := Term {AdditiveOperator Term}
-// Term := Factor {MultiplicativeOperator Factor}
+    ReadChar();
+    Program();
 
+    cout << "\tmovq %rbp, %rsp" << endl;
+    cout << "\tpop %rbp" << endl;
+    cout << "\tret" << endl;
 
-
-int main(void){	// First version : Source code on standard input and assembly code on standard output
-	// Header for gcc assembler / linker
-	cout << "\t\t\t# This code was produced by the CERI Compiler"<<endl;
-	cout << "\t.text\t\t# The following lines contain the program"<<endl;
-	cout << "\t.globl main\t# The main function must be visible from outside"<<endl;
-	cout << "main:\t\t\t# The main function body :"<<endl;
-	cout << "\tmovq %rsp, %rbp\t# Save the position of the stack's top"<<endl;
-
-	// Let's proceed to the analysis and code production
-	ReadChar();
-	Expression();
-	ReadChar();
-	// Trailer for the gcc assembler / linker
-	cout << "\tmovq %rbp, %rsp\t\t# Restore the position of the stack's top"<<endl;
-	cout << "\tret\t\t\t# Return from main function"<<endl;
-	if(cin.get(current)){
-		cerr <<"Caractères en trop à la fin du programme : ["<<current<<"]";
-		Error("."); // unexpected characters at the end of program
-	}
-
+    return 0;
 }
-		
-			
-
-
-
-
-
