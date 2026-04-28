@@ -41,6 +41,7 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 "IF" return IF;
 "WHILE" return WHILE;
 "THEN" return THEN;
+"DISPLAY" return DISPLAY;
 
 {addop}		return ADDOP;
 {mulop}		return MULOP;
