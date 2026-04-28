@@ -31,6 +31,7 @@ using namespace std;
 enum OPREL {EQU, DIFF, INF, SUP, INFE, SUPE, WTFR};
 enum OPADD {ADD, SUB, OR, WTFA};
 enum OPMUL {MUL, DIV, MOD, AND ,WTFM};
+enum TYPES {UNSIGNED_INT};
 
 TOKEN current;				// Current token
 
@@ -54,34 +55,17 @@ void Error(string s){
 	cerr<< s << endl;
 	exit(-1);
 }
-
-// Program := [DeclarationPart] StatementPart
-// DeclarationPart := "[" Letter {"," Letter} "]"
-// StatementPart := Statement {";" Statement} "."
-// Statement := AssignementStatement
-// AssignementStatement := Letter "=" Expression
-
-// Expression := SimpleExpression [RelationalOperator SimpleExpression]
-// SimpleExpression := Term {AdditiveOperator Term}
-// Term := Factor {MultiplicativeOperator Factor}
-// Factor := Number | Letter | "(" Expression ")"| "!" Factor
-// Number := Digit{Digit}
-
-// AdditiveOperator := "+" | "-" | "||"
-// MultiplicativeOperator := "*" | "/" | "%" | "&&"
-// RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="  
-// Digit := "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"
-// Letter := "a"|...|"z"
-	
 		
-void Identifier(void){
+enum TYPES Identifier(void){
 	cout << "\tpush "<<lexer->YYText()<<endl;
 	current=(TOKEN) lexer->yylex();
+	return UNSIGNED_INT;
 }
 
-void Number(void){
+enum TYPES Number(void){
 	cout <<"\tpush $"<<atoi(lexer->YYText())<<endl;
 	current=(TOKEN) lexer->yylex();
+	return UNSIGNED_INT;
 }
 
 void Expression(void);			// Called by Term() and calls Term()
@@ -303,15 +287,17 @@ void Statement(void);
 
 //BlockStatement := "BEGIN" Statement { ";" Statement } "END"
 void BlockStatement(void){
-	if (lexer->yylex() == BEG){
+	if (current == BEG){
+		current=(TOKEN) lexer->yylex();
 		Statement();
 		while (current == SEMICOLON){
-			lexer->YYText();
+			current=(TOKEN) lexer->yylex();
 			Statement();
 		}
-		if (lexer->yylex() != END){
+		if (current != END){
 			Error("END requit");
 		}
+		current=(TOKEN) lexer->yylex();
 	}else{
 		Error("Begin requit");
 	}
@@ -319,11 +305,14 @@ void BlockStatement(void){
 
 //ForStatement := "FOR" AssignementStatement "To" Expression "DO" Statement
 void ForStatement(void){
-	if (lexer->yylex() == FOR){
+	if (current == FOR){
+		current=(TOKEN) lexer->yylex();
 		AssignementStatement();
-		if (lexer->yylex() == TO){
+		if (current == TO){
+			current=(TOKEN) lexer->yylex();
 			Expression();
-			if (lexer->yylex() == DO){
+			if (current == DO){
+				current=(TOKEN) lexer->yylex();
 				Statement();
 			}else{
 				Error("DO requit");
@@ -338,9 +327,11 @@ void ForStatement(void){
 
 //WhileStatement := "WHILE" Expression "DO" Statement
 void WhileStatement(void){
-	if (lexer->yylex() == WHILE){
+	if (current == WHILE){
+		current=(TOKEN) lexer->yylex();
 		Expression();
-		if (lexer->yylex() == DO){
+		if (current == DO){
+			current=(TOKEN) lexer->yylex();
 			Statement();
 		}else{
 			Error("DO requit");
@@ -352,11 +343,14 @@ void WhileStatement(void){
 
 //IfStatement := "IF" Expression "THEN" Statement [ "ELSE" Statement ]
 void IfStatement(void){
-	if (lexer->yylex() == IF){
+	if (current == IF){
+		current=(TOKEN) lexer->yylex();
 		Expression();
-		if (lexer->yylex() == THEN){
+		if (current == THEN){
+			current=(TOKEN) lexer->yylex();
 			Statement();
-			if (lexer->yylex() == ELSE){
+			if (current == ELSE){
+				current=(TOKEN) lexer->yylex();
 				Statement();
 			}
 		}else{
@@ -371,13 +365,13 @@ void IfStatement(void){
 void Statement(void){
 	if (current == ID){
 		AssignementStatement();
-	}else if (lexer->yylex() == IF){
+	}else if (current == IF){
 		IfStatement();
-	}else if (lexer->yylex() == WHILE){
+	}else if (current == WHILE){
 		WhileStatement();
-	}else if (lexer->yylex() == FOR){
+	}else if (current == FOR){
 		ForStatement();
-	}else if (lexer->yylex() == BEG){
+	}else if (current == BEG){
 		BlockStatement();
 	}else{
 		Error("Absence de mot clé");
