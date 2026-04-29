@@ -31,7 +31,6 @@ using namespace std;
 enum OPREL {EQU, DIFF, INF, SUP, INFE, SUPE, WTFR};
 enum OPADD {ADD, SUB, OR, WTFA};
 enum OPMUL {MUL, DIV, MOD, AND ,WTFM};
-enum TYPES {INTEGER, BOOLEAN};
 
 TOKEN current;				// Current token
 
@@ -414,7 +413,49 @@ void DisplayStatement(void){
 
 }
 
-//Statement := AssignementStatement | IfStatement | WhileStatement | ForStatement | BlockStatement | DisplayStatement
+// VarDeclaration := Ident {"," Ident} ":" TYPES   Fonctionne mais ne met rien dans le .s
+void VarDeclaration(void){
+	set<string> idents;
+	if (current != ID)
+		Error("Identificateur attendu");
+	current=(TOKEN) lexer->yylex();
+	while(current==COMMA){
+		current=(TOKEN) lexer->yylex();
+		if (current != ID)
+			Error("Identificateur attendu");
+		idents.insert(lexer->YYText());
+		current=(TOKEN) lexer->yylex();
+	}
+	if(current!=COLON)
+		Error("caractère ':' attendu");
+	current=(TOKEN) lexer->yylex();
+
+	if (strcmp(lexer->YYText(),"INTEGER")==0){
+		current=(TOKEN) lexer->yylex();
+	}else if (strcmp(lexer->YYText(),"BOOLEAN")==0){
+		current=(TOKEN) lexer->yylex();	
+	}else{
+		Error("Type attendu");
+	}
+}
+
+// VarDeclarationPart := "VAR" VarDeclaration {";" VarDeclaration} "."
+void VarDeclarationPart(void){
+	if (current == VAR){
+		current=(TOKEN) lexer->yylex();
+		VarDeclaration();
+		while(current==SEMICOLON){
+			current=(TOKEN) lexer->yylex();
+			VarDeclaration();
+		}
+		if(current!=DOT)
+			Error("caractère '.' attendu");
+	}else{
+		Error("VAR attendu");
+	}
+}
+
+//Statement := AssignementStatement | IfStatement | WhileStatement | ForStatement | BlockStatement | DisplayStatement | VarDeclarationPart
 void Statement(void){
 	if (current == ID){
 		AssignementStatement();
@@ -428,6 +469,8 @@ void Statement(void){
 		BlockStatement();
 	}else if (current == DISPLAY){
 		DisplayStatement();
+	}else if (current == VAR){
+		VarDeclarationPart();
 	}else{
 		Error("Absence de mot clé");
 	}
@@ -444,8 +487,9 @@ void StatementPart(void){
 		current=(TOKEN) lexer->yylex();
 		Statement();
 	}
-	if(current!=DOT)
-		Error("caractère '.' attendu");
+	if(current!=DOT){
+		Error("caractère '.' attendu2");
+	}
 	current=(TOKEN) lexer->yylex();
 }
 

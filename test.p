@@ -1,3 +1,3 @@
-[a]
-a:=5+6;
-DISPLAY a+1.
+VAR 
+     a,b,c   : BOOLEAN ; 
+     d,e,f,g : INTEGER.
