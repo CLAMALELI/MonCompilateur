@@ -1,5 +1,7 @@
-VAR 
-     a,b,c   : BOOLEAN ; 
-     d,e,f,g : INTEGER.
-g := 42;
-DISPLAY g.
+VAR f, g, h : DOUBLE.
+BEGIN
+  f := 3.14;
+  g := 3.142;
+  h := f + g;
+  DISPLAY h
+END.
