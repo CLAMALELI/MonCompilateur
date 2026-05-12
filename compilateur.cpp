@@ -85,6 +85,16 @@ enum TYPES CharConst(void){
 	return CHAR;
 }
 
+void Const(void){
+	if(current==NUMBER){
+		Number();
+	}else if(current==CHARCONST){
+		CharConst();
+	}else{
+		Error("Constante attendue");
+	}
+}
+
 enum TYPES Expression(void);			// Called by Term() and calls Term()
 
 // Factor := Number | Letter | "(" Expression ")"| "!" Factor
@@ -609,7 +619,65 @@ void VarDeclarationPart(void){
     }
 }
 
-//Statement := AssignementStatement | IfStatement | WhileStatement | ForStatement | BlockStatement | DisplayStatement | VarDeclarationPart
+//<empty>::=
+bool Empty(void){
+	if (current == VIDE){
+		return true;
+	}else{
+		return false;
+	}
+}
+
+//<caseLabelList> ::= <Constant> {, <Constant> }
+void CaseLabeList(void){
+	Const();
+	while(current==COMMA){
+		current=(TOKEN) lexer->yylex();
+		Const();
+	}
+}
+
+//<caseListElement> ::= <case label list> : <statement> | <empty>
+void CaseListElement(void){
+	if (Empty()){
+		return;
+	} 
+	CaseLabeList();
+	if (current == COLON){
+		current=(TOKEN) lexer->yylex();
+		Statement();
+	}else{
+		Error(" : attendu ");
+	}
+}
+
+//Casestatement ::= case <expression> of <case list element> {; <case list element> } end
+void CaseStatement(void){
+	if (current == CASE){
+		current=(TOKEN) lexer->yylex();
+		Expression();
+		if (current != OF){
+			Error("OF attendu");
+		}
+		current=(TOKEN) lexer->yylex();
+		CaseListElement();
+		while(current==SEMICOLON){
+			current=(TOKEN) lexer->yylex();
+			CaseListElement();
+		}
+		if (current != END){
+			Error("END requis");
+		}
+		current=(TOKEN) lexer->yylex();
+	}else{
+		Error(" CASE requit");
+	}
+}
+
+
+
+
+//Statement := AssignementStatement | IfStatement | WhileStatement | ForStatement | BlockStatement | DisplayStatement | VarDeclarationPart | CaseStatement
 void Statement(void){
 	if (current == ID){
 		AssignementStatement();
@@ -623,6 +691,8 @@ void Statement(void){
 		BlockStatement();
 	}else if (current == DISPLAY){
 		DisplayStatement();
+	}else if (current == CASE){
+		CaseStatement();
 	}else{
 		Error("Absence de mot clé");
 	}

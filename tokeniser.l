@@ -48,6 +48,9 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 "INTEGER" return INTEGER;
 "DOUBLE" return DOUBLE;
 "CHAR" return CHAR;
+"CASE" return CASE;
+"OF" return OF;
+"" return VIDE;
 
 {charconst}	return CHARCONST;
 {addop}		return ADDOP;
