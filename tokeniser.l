@@ -19,6 +19,7 @@ using namespace std;
 %option c++
 %option yylineno
 
+charconst	\'\\?.\'
 stringconst  \"[^\n"]+\"
 ws      [ \t\n\r]+
 alpha   [A-Za-z]
@@ -48,6 +49,7 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 "DOUBLE" return DOUBLE;
 "CHAR" return CHAR;
 
+{charconst}	return CHARCONST;
 {addop}		return ADDOP;
 {mulop}		return MULOP;
 {relop}		return RELOP;

@@ -77,35 +77,54 @@ enum TYPES Number(void){
 	return INTEGER;
 }
 
+enum TYPES CharConst(void){
+	cout<<"\tmovq $0, %rax"<<endl;
+	cout<<"\tmovb $"<<lexer->YYText()<<",%al"<<endl;
+	cout<<"\tpush %rax\t# push a 64-bit version of "<<lexer->YYText()<<endl;
+	current=(TOKEN) lexer->yylex();
+	return CHAR;
+}
+
 enum TYPES Expression(void);			// Called by Term() and calls Term()
 
 // Factor := Number | Letter | "(" Expression ")"| "!" Factor
 enum TYPES Factor(void){
     enum TYPES type;
-    if(current==RPARENT){
-        current=(TOKEN) lexer->yylex();
-        type=Expression();
-        if(current!=LPARENT)
-            Error("')' était attendu");
-        else
-            current=(TOKEN) lexer->yylex();
-    }
-    else if(current==NUMBER){
-        if(strchr(lexer->YYText(), '.') != nullptr){
-            double f = atof(lexer->YYText());
-            long long unsigned int *i = (long long unsigned int *) &f;
-            cout << "\tmovq $" << *i << ", %rax\t# charge le flottant " << f << endl;
-            cout << "\tpush %rax" << endl;
-            current=(TOKEN) lexer->yylex();
-            type = DOUBLE;
-        } else {
-            type = Number();
-        }
-    }
-    else if(current==ID)
-        type=Identifier();
-    else
-        Error("'(' ou chiffre ou lettre attendue");
+	switch (current)
+	{
+		case RPARENT:
+			current=(TOKEN) lexer->yylex();
+			type=Expression();
+			if(current!=LPARENT)
+				Error("')' était attendu");
+			else
+				current=(TOKEN) lexer->yylex();
+			break;
+		
+		case NUMBER:
+			if(strchr(lexer->YYText(), '.') != nullptr){
+				double f = atof(lexer->YYText());
+				long long unsigned int *i = (long long unsigned int *) &f;
+				cout << "\tmovq $" << *i << ", %rax\t# charge le flottant " << f << endl;
+				cout << "\tpush %rax" << endl;
+				current=(TOKEN) lexer->yylex();
+				type = DOUBLE;
+			} else {
+				type = Number();
+			}
+			break;
+
+		case ID:
+			type=Identifier();
+			break;
+
+		case CHARCONST:
+			type = CharConst();
+			break;
+		default:
+			Error("'(', ou constante ou variable attendue.");
+			break;
+		}
     return type;
 }
 
@@ -387,96 +406,136 @@ void BlockStatement(void){
 
 //ForStatement := "FOR" AssignementStatement "To" Expression "DO" Statement
 void ForStatement(void){
-	if (current == FOR){
-		current=(TOKEN) lexer->yylex();
-		AssignementStatement();
-		if (current == TO){
-			current=(TOKEN) lexer->yylex();
-			Expression();
-			if (current == DO){
-				current=(TOKEN) lexer->yylex();
-				Statement();
-			}else{
-				Error("DO requit");
-			}
-		}else{
-			Error("TO requit");
-		}
-	}else{
-		Error("FOR requit");
-	}
+    unsigned long tag = ++TagNumber;
+    if (current == FOR){
+        current=(TOKEN) lexer->yylex();
+        if (current != ID) Error("Identificateur attendu");
+        string varName = lexer->YYText();
+        AssignementStatement();
+        if (current == TO){
+            current=(TOKEN) lexer->yylex();
+            Expression();
+            cout << "ForBegin" << tag << ":" << endl;
+            cout << "\tmovq " << varName << ", %rax" << endl;
+            cout << "\tcmpq (%rsp), %rax" << endl;
+            cout << "\tjg ForEnd" << tag << endl;
+            if (current == DO){
+                current=(TOKEN) lexer->yylex();
+                Statement();
+                cout << "\taddq $1, " << varName << endl;
+                cout << "\tjmp ForBegin" << tag << endl;
+                cout << "ForEnd" << tag << ":" << endl;
+                cout << "\taddq $8, %rsp\t# dépile la borne" << endl;
+            } else {
+                Error("DO requit");
+            }
+        } else {
+            Error("TO requit");
+        }
+    } else {
+        Error("FOR requit");
+    }
 }
 
 //WhileStatement := "WHILE" Expression "DO" Statement
 void WhileStatement(void){
-	enum TYPES type;
-	if (current == WHILE){
-		current=(TOKEN) lexer->yylex();
-		type = Expression();
-		if (type != BOOLEAN){
-			Error("L'Expression du while doit etre de type boolean");
-		}
-		if (current == DO){
-			current=(TOKEN) lexer->yylex();
-			Statement();
-		}else{
-			Error("DO requit");
-		}
-	}else{
-		Error("While requit");
-	}
+    enum TYPES type;
+    unsigned long tag = ++TagNumber;
+    if (current == WHILE){
+        cout << "WhileBegin" << tag << ":" << endl;
+        current=(TOKEN) lexer->yylex();
+        type = Expression();
+        if (type != BOOLEAN)
+            Error("L'Expression du while doit etre de type boolean");
+        cout << "\tpop %rax" << endl;
+        cout << "\tcmpq $0, %rax" << endl;
+        cout << "\tje WhileEnd" << tag << endl;
+        if (current == DO){
+            current=(TOKEN) lexer->yylex();
+            Statement();
+            cout << "\tjmp WhileBegin" << tag << endl;
+            cout << "WhileEnd" << tag << ":" << endl;
+        } else {
+            Error("DO requit");
+        }
+    } else {
+        Error("While requit");
+    }
 }
 
 //IfStatement := "IF" Expression "THEN" Statement [ "ELSE" Statement ]
 void IfStatement(void){
-	enum TYPES type;
-	if (current == IF){
-		current=(TOKEN) lexer->yylex();
-		type = Expression();
-		if (type != BOOLEAN){
-			Error("L'Expression du if doit etre de type boolean");
-		}
-		if (current == THEN){
-			current=(TOKEN) lexer->yylex();
-			Statement();
-			if (current == ELSE){
-				current=(TOKEN) lexer->yylex();
-				Statement();
-			}
-		}else{
-			Error("THEN requit");
-		}
-	}else{
-		Error("IF requit");
-	}
+    enum TYPES type;
+    unsigned long tag = ++TagNumber;
+    if (current == IF){
+        current=(TOKEN) lexer->yylex();
+        type = Expression();
+        if (type != BOOLEAN)
+            Error("L'Expression du if doit etre de type boolean");
+        cout << "\tpop %rax" << endl;
+        cout << "\tcmpq $0, %rax" << endl;
+        cout << "\tje Else" << tag << endl;
+        if (current == THEN){
+            current=(TOKEN) lexer->yylex();
+            Statement();
+            cout << "\tjmp EndIf" << tag << endl;
+            cout << "Else" << tag << ":" << endl;
+            if (current == ELSE){
+                current=(TOKEN) lexer->yylex();
+                Statement();
+            }
+            cout << "EndIf" << tag << ":" << endl;
+        } else {
+            Error("THEN requit");
+        }
+    } else {
+        Error("IF requit");
+    }
 }
 
 //  DisplayStatement := "DISPLAY" expression           Affiche expression
 void DisplayStatement(void){
-    enum TYPES type;
-    if (current == DISPLAY){
-        current=(TOKEN) lexer->yylex();
-        type = Expression();
-        
-        if(type == DOUBLE) {
-            cout << "\tmovsd (%rsp), %xmm0" << endl;
-            cout << "\tandq $-16, %rsp\t# Aligne la pile sur 16 octets pour printf" << endl;
-            cout << "\tmovq $FormatDouble, %rdi" << endl;
-            cout << "\tmovl $1, %eax" << endl;
-            cout << "\tcall printf@PLT" << endl;
-            cout << "\tmovq %rbp, %rsp\t# On revient à un état connu via le registre de base" << endl;
-            cout << "\tsubq $0, %rsp\t# (Optionnel) Ajustement si nécessaire" << endl;
-        } else {
-            cout << "\tpop %rdx" << endl;
-            cout << "\tmovq %rbp, %rsp\t# Sécurité alignement" << endl;
-            cout << "\tandq $-16, %rsp" << endl;
-            cout << "\tmovq $FormatString1, %rsi" << endl;
-            cout << "\tmovl $1, %edi" << endl;
-            cout << "\tmovl $0, %eax" << endl;
-            cout << "\tcall __printf_chk@PLT" << endl;
-            cout << "\tmovq %rbp, %rsp" << endl;
-        }
-    }
+	enum TYPES type;
+	unsigned long long tag=++TagNumber;
+	current=(TOKEN) lexer->yylex();
+	type=Expression();
+	switch(type){
+	case INTEGER:
+		cout << "\tpop %rsi\t# The value to be displayed"<<endl;
+		cout << "\tmovq $FormatString1, %rdi\t# \"%llu\\n\""<<endl;
+		cout << "\tmovl	$0, %eax"<<endl;
+		cout << "\tcall	printf@PLT"<<endl;
+		break;
+	case BOOLEAN:
+			cout << "\tpop %rdx\t# Zero : False, non-zero : true"<<endl;
+			cout << "\tcmpq $0, %rdx"<<endl;
+			cout << "\tje False"<<tag<<endl;
+			cout << "\tmovq $TrueString, %rdi\t# \"TRUE\\n\""<<endl;
+			cout << "\tjmp Next"<<tag<<endl;
+			cout << "False"<<tag<<":"<<endl;
+			cout << "\tmovq $FalseString, %rdi\t# \"FALSE\\n\""<<endl;
+			cout << "Next"<<tag<<":"<<endl;
+			cout << "\tcall	puts@PLT"<<endl;
+			break;
+	case DOUBLE:
+			cout << "\tmovsd	(%rsp), %xmm0\t\t# &stack top -> %xmm0"<<endl;
+			cout << "\tsubq	$16, %rsp\t\t# allocation for 3 additional doubles"<<endl;
+			cout << "\tmovsd %xmm0, 8(%rsp)"<<endl;
+			cout << "\tmovq $FormatString2, %rdi\t# \"%lf\\n\""<<endl;
+			cout << "\tmovq	$1, %rax"<<endl;
+			cout << "\tcall	printf"<<endl;
+			cout << "nop"<<endl;
+			cout << "\taddq $24, %rsp\t\t\t# pop nothing"<<endl;
+			break;
+	case CHAR:
+			cout<<"\tpop %rsi\t\t\t# get character in the 8 lowest bits of %si"<<endl;
+			cout << "\tmovq $FormatString3, %rdi\t# \"%c\\n\""<<endl;
+			cout << "\tmovl	$0, %eax"<<endl;
+			cout << "\tcall	printf@PLT"<<endl;
+			break;
+	default:
+			Error("DISPLAY attent un INTEGER, BOOLEAN, DOUBLE ou CHAR.");
+		}
 }
 
 enum TYPES check_type(void){
@@ -598,9 +657,14 @@ void Program(void){
 int main(void){	// First version : Source code on standard input and assembly code on standard output
 	// Header for gcc assembler / linker
 	cout << "\t\t\t# This code was produced by the CERI Compiler"<<endl;
-	cout << "\t.section .rodata"<<endl;
-	cout << "FormatString1:\t.string \"%llu\\n\""<<endl;
+	cout << ".data"<<endl;
 	cout << "FormatDouble:\t.string \"%g\\n\"\t# Pour les flottants" << endl;
+	cout << "FormatString1:\t.string \"%llu\\n\""<<endl;
+	cout << "FormatString2:\t.string \"%lf\\n\"\t# used by printf to display a double"<<endl;
+	cout << "FormatString3:\t.string \"%c\"\t# used by printf to display a 8-bit single character"<<endl; 
+	cout << "TrueString:\t.string \"TRUE\"\t# used by printf to display the boolean value TRUE"<<endl; 
+	cout << "FalseString:\t.string \"FALSE\"\t# used by printf to display the boolean value FALSE"<<endl; 
+
 	// Let's proceed to the analysis and code production
 	current=(TOKEN) lexer->yylex();
 	Program();
