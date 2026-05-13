@@ -85,11 +85,24 @@ enum TYPES CharConst(void){
 	return CHAR;
 }
 
+enum TYPES StringConst(void){
+    unsigned long tag = ++TagNumber;
+    string text = lexer->YYText();
+    cout << "\t.section .data" << endl;
+    cout << "StrConst" << tag << ":\t.string " << text << endl;
+    cout << "\t.text" << endl;
+    cout << "\tpushq $StrConst" << tag << "\t# adresse de " << text << endl;
+    current=(TOKEN) lexer->yylex();
+    return STRING;
+}
+
 void Const(void){
 	if(current==NUMBER){
 		Number();
 	}else if(current==CHARCONST){
 		CharConst();
+	}else if(current==STRINGCONST){
+		StringConst();
 	}else{
 		Error("Constante attendue");
 	}
@@ -131,6 +144,11 @@ enum TYPES Factor(void){
 		case CHARCONST:
 			type = CharConst();
 			break;
+
+		case STRINGCONST:
+			type = StringConst();
+			break;
+		
 		default:
 			Error("'(', ou constante ou variable attendue.");
 			break;
@@ -569,6 +587,12 @@ void DisplayStatement(void){
 			cout << "\tmovl	$0, %eax"<<endl;
 			cout << "\tcall	printf@PLT"<<endl;
 			break;
+	case STRING:
+			cout<<"\tpop %rsi\t\t\t# get the address of the string in %rsi"<<endl;
+			cout << "\tmovq $FormatString4, %rdi\t# \"%s\\n\""<<endl;
+			cout << "\tmovl	$0, %eax"<<endl;
+			cout << "\tcall	printf@PLT"<<endl;
+			break;
 	default:
 			Error("DISPLAY attent un INTEGER, BOOLEAN, DOUBLE ou CHAR.");
 		}
@@ -583,6 +607,8 @@ enum TYPES check_type(void){
 		return DOUBLE;
 	}else if(strcmp(lexer->YYText(),"CHAR")==0){
 		return CHAR;
+	}else if(strcmp(lexer->YYText(),"STRING")==0){
+		return STRING;
 	}else{
 		Error("Type invalide");
 	}
@@ -618,6 +644,8 @@ void VarDeclaration(void){
         case BOOLEAN:  directive = ".quad 0";     break;
         case DOUBLE:   directive = ".double 0.0"; break;
         case CHAR:     directive = ".byte 0";     break;
+		case STRING:   directive = ".quad 0";     break;
+		default:       Error("Type non supporté");
     }
 
     for(const string& name : names){
@@ -831,7 +859,8 @@ int main(void){	// First version : Source code on standard input and assembly co
 	cout << "FormatDouble:\t.string \"%g\\n\"\t# Pour les flottants" << endl;
 	cout << "FormatString1:\t.string \"%llu\\n\""<<endl;
 	cout << "FormatString2:\t.string \"%lf\\n\"\t# used by printf to display a double"<<endl;
-	cout << "FormatString3:\t.string \"%c\"\t# used by printf to display a 8-bit single character"<<endl; 
+	cout << "FormatString3:\t.string \"%c\"\t# used by printf to display a 8-bit single character"<<endl;
+	cout << "FormatString4:\t.string \"%s\\n\"\t# used by printf to display a string"<<endl;
 	cout << "TrueString:\t.string \"TRUE\"\t# used by printf to display the boolean value TRUE"<<endl; 
 	cout << "FalseString:\t.string \"FALSE\"\t# used by printf to display the boolean value FALSE"<<endl; 
 

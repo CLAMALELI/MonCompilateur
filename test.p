@@ -1,9 +1,6 @@
 VAR
-  i : INTEGER.
+  s : STRING.
 BEGIN
-  i := 0;
-  DO
-    i := i + 1
-  WHILE i < 3;
-  DISPLAY i
+  s := "Hello, World!";
+  DISPLAY s
 END.
