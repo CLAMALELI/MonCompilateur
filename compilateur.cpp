@@ -898,7 +898,7 @@ int main(void){	// First version : Source code on standard input and assembly co
 	cout << "FormatDouble:\t.string \"%g\\n\"\t# Pour les flottants" << endl;
 	cout << "FormatString1:\t.string \"%llu\\n\""<<endl;
 	cout << "FormatString2:\t.string \"%lf\\n\"\t# used by printf to display a double"<<endl;
-	cout << "FormatString3:\t.string \"%c\"\t# used by printf to display a 8-bit single character"<<endl;
+	cout << "FormatString3:\t.string \"%c\\n\"\t# used by printf to display a 8-bit single character"<<endl;
 	cout << "FormatString4:\t.string \"%s\\n\"\t# used by printf to display a string"<<endl;
 	cout << "TrueString:\t.string \"TRUE\"\t# used by printf to display the boolean value TRUE"<<endl; 
 	cout << "FalseString:\t.string \"FALSE\"\t# used by printf to display the boolean value FALSE"<<endl; 
