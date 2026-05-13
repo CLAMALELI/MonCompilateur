@@ -270,7 +270,29 @@ enum TYPES SimpleExpression(void){
             }
             cout << "\tsubq $8, %rsp" << endl;
             cout << "\tfstpl (%rsp)" << endl;
-        } else {
+        }else if (type1 == STRING) {
+			cout << "\tpop %rsi\t# adresse de la 2e chaîne" << endl;
+			cout << "\tpop %rdi\t# adresse de la 1ere chaîne" << endl;
+			cout << "\tpush %rdi\t# sauvegarder addr str1" << endl;
+			cout << "\tpush %rsi\t# sauvegarder addr str2" << endl;
+			cout << "\tcall strlen@PLT" << endl;
+			cout << "\tmovq %rax, %rcx\t# longueur str1" << endl;
+			cout << "\tmovq 0(%rsp), %rdi\t# addr str2" << endl;
+			cout << "\tcall strlen@PLT" << endl;
+			cout << "\taddq %rax, %rcx\t# longueur totale" << endl;
+			cout << "\taddq $1, %rcx\t# +1 pour '\\0'" << endl;
+			cout << "\tmovq %rcx, %rdi\t# taille à allouer" << endl;
+			cout << "\tcall sbrk@PLT" << endl;
+			cout << "\tmovq %rax, %rbx\t# adresse du buffer dans %rbx" << endl;
+			cout << "\tmovq %rbx, %rdi\t# dest = buffer" << endl;
+			cout << "\tmovq 8(%rsp), %rsi\t# src = str1" << endl;
+			cout << "\tcall strcpy@PLT" << endl;
+			cout << "\tmovq %rbx, %rdi\t# dest = buffer" << endl;
+			cout << "\tmovq 0(%rsp), %rsi\t# src = str2" << endl;
+			cout << "\tcall strcat@PLT" << endl;
+			cout << "\taddq $16, %rsp\t# dépiler str1 et str2 sauvegardées" << endl;
+			cout << "\tpush %rbx\t# adresse du buffer résultat" << endl;
+		} else {
             cout << "\tpop %rbx"<<endl;
             cout << "\tpop %rax"<<endl;
             switch(adop){

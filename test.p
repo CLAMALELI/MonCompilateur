@@ -1,6 +1,8 @@
 VAR
-  s : STRING.
+  s, v, z : STRING.
 BEGIN
-  s := "Hello, World!";
-  DISPLAY s
+  s := "Hello, ";
+  v := "World!";
+  z := s + v;
+  DISPLAY z
 END.
