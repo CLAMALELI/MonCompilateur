@@ -454,7 +454,7 @@ void BlockStatement(void){
 	}
 }
 
-//ForStatement := "FOR" AssignementStatement "To" Expression "DO" Statement
+//ForStatement := "FOR" AssignementStatement "To" Expression "DO" Statement | "FOR" AssignementStatement "DOWNTO" Expression "DO" Statement
 void ForStatement(void){
     unsigned long tag = ++TagNumber;
     if (current == FOR){
@@ -479,8 +479,25 @@ void ForStatement(void){
             } else {
                 Error("DO requit");
             }
-        } else {
-            Error("TO requit");
+        }else if (current == DOWNTO){
+			current=(TOKEN) lexer->yylex();
+			Expression();
+			cout << "ForDownToBegin" << tag << ":" << endl;
+			cout << "\tmovq " << varName << ", %rax" << endl;
+			cout << "\tcmpq (%rsp), %rax" << endl;
+			cout << "\tjl ForDownToEnd" << tag << endl;
+			if (current == DO){
+				current=(TOKEN) lexer->yylex();
+				Statement();
+				cout << "\tsubq $1, " << varName << endl;
+				cout << "\tjmp ForDownToBegin" << tag << endl;
+				cout << "ForDownToEnd" << tag << ":" << endl;
+				cout << "\taddq $8, %rsp\t# dépile la borne" << endl;
+			}else{
+				Error("DO requit");
+			}
+		}else {
+            Error("TO or DOWNTO requit");
         }
     } else {
         Error("FOR requit");

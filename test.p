@@ -1,8 +1,6 @@
 VAR
-  s, v, z : STRING.
+  x : INTEGER.
 BEGIN
-  s := "Hello, ";
-  v := "World!";
-  z := s + v;
-  DISPLAY z
+  FOR x := 10 DOWNTO 1 DO
+  DISPLAY x
 END.

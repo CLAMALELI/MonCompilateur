@@ -53,6 +53,7 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 "" return VIDE;
 "REPEAT" return REPEAT;
 "UNTIL" return UNTIL;
+"DOWNTO" return DOWNTO;
 
 {charconst}	return CHARCONST;
 {addop}		return ADDOP;
