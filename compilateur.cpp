@@ -473,6 +473,32 @@ void WhileStatement(void){
     }
 }
 
+//WhileStatement := "DO" Statement "WHILE" Expression
+void DoWhileStatement(void){
+	enum TYPES type;
+	unsigned long tag = ++TagNumber;
+	if (current == DO){
+		current=(TOKEN) lexer->yylex();
+		cout << "DoWhileBegin" << tag << ":" << endl;
+		Statement();
+		if (current == WHILE){
+			current=(TOKEN) lexer->yylex();
+			type = Expression();
+			if (type != BOOLEAN)
+				Error("L'Expression du while doit etre de type boolean");
+			cout << "\tpop %rax" << endl;
+			cout << "\tcmpq $0, %rax" << endl;
+			cout << "\tje DoWhileEnd" << tag << endl;
+			cout << "\tjmp DoWhileBegin" << tag << endl;
+			cout << "DoWhileEnd" << tag << ":" << endl;
+		} else {
+			Error("WHILE requit");
+		}
+	} else {
+		Error("DO requit");
+	}
+}
+
 //IfStatement := "IF" Expression "THEN" Statement [ "ELSE" Statement ]
 void IfStatement(void){
     enum TYPES type;
@@ -639,45 +665,115 @@ void CaseLabeList(void){
 
 //<caseListElement> ::= <case label list> : <statement> | <empty>
 void CaseListElement(void){
-	if (Empty()){
-		return;
-	} 
-	CaseLabeList();
-	if (current == COLON){
-		current=(TOKEN) lexer->yylex();
-		Statement();
-	}else{
-		Error(" : attendu ");
-	}
+    if (Empty()) return;
+    CaseLabeList();
+    if (current == COLON){
+        current=(TOKEN) lexer->yylex();
+        Statement();
+    } else {
+        Error(" : attendu ");
+    }
 }
 
-//Casestatement ::= case <expression> of <case list element> {; <case list element> } end
+//CaseStatement ::= CASE <expression> OF <case list element> {; <case list element>} END
 void CaseStatement(void){
-	if (current == CASE){
-		current=(TOKEN) lexer->yylex();
-		Expression();
-		if (current != OF){
-			Error("OF attendu");
-		}
-		current=(TOKEN) lexer->yylex();
-		CaseListElement();
-		while(current==SEMICOLON){
-			current=(TOKEN) lexer->yylex();
-			CaseListElement();
-		}
-		if (current != END){
-			Error("END requis");
-		}
-		current=(TOKEN) lexer->yylex();
-	}else{
-		Error(" CASE requit");
-	}
+    if (current != CASE){
+        Error("CASE requis");
+    }
+    unsigned long tag = ++TagNumber;
+    current=(TOKEN) lexer->yylex();
+    Expression();
+    cout << "\tpop %rax\t# valeur du CASE" << endl;
+
+    if (current != OF){
+        Error("OF attendu");
+    }
+    current=(TOKEN) lexer->yylex();
+    vector<unsigned long> caseTags;
+    unsigned long caseTag = ++TagNumber;
+    caseTags.push_back(caseTag);
+    Const();
+    cout << "\tpop %rbx\t# constante du cas" << endl;
+    cout << "\tcmpq %rbx, %rax" << endl;
+    cout << "\tje CaseBody" << caseTag << endl;
+
+    while(current == COMMA){
+        current=(TOKEN) lexer->yylex();
+        Const();
+        cout << "\tpop %rbx" << endl;
+        cout << "\tcmpq %rbx, %rax" << endl;
+        cout << "\tje CaseBody" << caseTag << endl;
+    }
+
+    if (current != COLON) Error(": attendu");
+    current=(TOKEN) lexer->yylex();
+    cout << "\tjmp CaseNext" << caseTag << endl;
+    cout << "CaseBody" << caseTag << ":" << endl;
+    Statement();
+    cout << "\tjmp CaseEnd" << tag << endl;
+    cout << "CaseNext" << caseTag << ":" << endl;
+
+    while(current == SEMICOLON){
+        current=(TOKEN) lexer->yylex();
+        if (Empty()) break;
+
+        caseTag = ++TagNumber;
+        caseTags.push_back(caseTag);
+
+        Const();
+        cout << "\tpop %rbx" << endl;
+        cout << "\tcmpq %rbx, %rax" << endl;
+        cout << "\tje CaseBody" << caseTag << endl;
+
+        while(current == COMMA){
+            current=(TOKEN) lexer->yylex();
+            Const();
+            cout << "\tpop %rbx" << endl;
+            cout << "\tcmpq %rbx, %rax" << endl;
+            cout << "\tje CaseBody" << caseTag << endl;
+        }
+
+        if (current != COLON) Error(": attendu");
+        current=(TOKEN) lexer->yylex();
+
+        cout << "\tjmp CaseNext" << caseTag << endl;
+        cout << "CaseBody" << caseTag << ":" << endl;
+        Statement();
+        cout << "\tjmp CaseEnd" << tag << endl;
+        cout << "CaseNext" << caseTag << ":" << endl;
+    }
+
+    cout << "CaseEnd" << tag << ":" << endl;
+
+    if (current != END) Error("END requis");
+    current=(TOKEN) lexer->yylex();
+}
+
+//<RepeatStatement> ::= REPEAT <statement> {; <statement>} UNTIL <expression>
+void RepeatStatement(void){
+    unsigned long tag = ++TagNumber;
+    if (current != REPEAT) Error("REPEAT requis");
+    current=(TOKEN) lexer->yylex();
+
+    cout << "RepeatBegin" << tag << ":" << endl;
+
+    Statement();
+    while (current == SEMICOLON){
+        current=(TOKEN) lexer->yylex();
+        Statement();
+    }
+    if (current != UNTIL) Error("UNTIL requis");
+    current=(TOKEN) lexer->yylex();
+    Expression();
+
+    cout << "\tpop %rax" << endl;
+    cout << "\tcmpq $0, %rax" << endl;
+    cout << "\tje RepeatBegin" << tag << endl;
+	cout << "RepeatEnd" << tag << ":" << endl;
 }
 
 
-
-
-//Statement := AssignementStatement | IfStatement | WhileStatement | ForStatement | BlockStatement | DisplayStatement | VarDeclarationPart | CaseStatement
+//Statement := AssignementStatement | IfStatement | WhileStatement | ForStatement | BlockStatement | DisplayStatement | VarDeclarationPart | CaseStatement | RepeatStatement | DoWhileStatement
 void Statement(void){
 	if (current == ID){
 		AssignementStatement();
@@ -693,6 +789,10 @@ void Statement(void){
 		DisplayStatement();
 	}else if (current == CASE){
 		CaseStatement();
+	}else if (current == REPEAT){
+		RepeatStatement();
+	}else if (current == DO){
+		DoWhileStatement();
 	}else{
 		Error("Absence de mot clé");
 	}
@@ -745,5 +845,4 @@ int main(void){	// First version : Source code on standard input and assembly co
 		cerr <<"Caractères en trop à la fin du programme : ["<<current<<"]";
 		Error("."); // unexpected characters at the end of program
 	}
-
 }

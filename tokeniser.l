@@ -51,6 +51,8 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 "CASE" return CASE;
 "OF" return OF;
 "" return VIDE;
+"REPEAT" return REPEAT;
+"UNTIL" return UNTIL;
 
 {charconst}	return CHARCONST;
 {addop}		return ADDOP;

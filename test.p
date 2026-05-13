@@ -1,11 +1,9 @@
 VAR
-  x : INTEGER.
-
+  i : INTEGER.
 BEGIN
-  x := 2;
-  CASE x OF
-    1 : DISPLAY x;
-    2 : DISPLAY x;
-    3 : DISPLAY x
-  END
+  i := 0;
+  DO
+    i := i + 1
+  WHILE i < 3;
+  DISPLAY i
 END.
