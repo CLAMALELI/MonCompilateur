@@ -55,6 +55,7 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 "UNTIL" return UNTIL;
 "DOWNTO" return DOWNTO;
 
+
 {charconst}	return CHARCONST;
 {addop}		return ADDOP;
 {mulop}		return MULOP;
@@ -72,6 +73,7 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 "("		return RPARENT;
 ")"		return LPARENT;
 "!"		return NOT;
+
 <<EOF>>		return FEOF;
 {ws}    {/* skip blanks and tabs */};
 "(*"    { /* Skip comments between '(*' and '*)' */

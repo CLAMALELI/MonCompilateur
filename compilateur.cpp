@@ -96,6 +96,7 @@ enum TYPES StringConst(void){
     return STRING;
 }
 
+// Const := Number | CharConst | StringConst
 void Const(void){
 	if(current==NUMBER){
 		Number();
@@ -110,7 +111,7 @@ void Const(void){
 
 enum TYPES Expression(void);			// Called by Term() and calls Term()
 
-// Factor := Number | Letter | "(" Expression ")"| "!" Factor
+// Factor := Number | Letter | "(" Expression ")" | CharConst | StringConst
 enum TYPES Factor(void){
     enum TYPES type;
 	switch (current)
@@ -530,7 +531,7 @@ void WhileStatement(void){
     }
 }
 
-//WhileStatement := "DO" Statement "WHILE" Expression
+//DoWhileStatement := "DO" Statement "WHILE" Expression
 void DoWhileStatement(void){
 	enum TYPES type;
 	unsigned long tag = ++TagNumber;
@@ -653,11 +654,10 @@ enum TYPES check_type(void){
 	}
 }
 
-// VarDeclaration := Ident {"," Ident} ":" TYPES  // TYPES = {INTEGER, BOOLEAN, DOUBLE, CHAR};
+// VarDeclaration := Ident {"," Ident} ":" TYPES
 void VarDeclaration(void){
 	enum TYPES type;
 	vector<string> names;
-
     if (current != ID)
         Error("Identificateur attendu");
     names.push_back(lexer->YYText());
@@ -712,7 +712,7 @@ void VarDeclarationPart(void){
     }
 }
 
-//<empty>::=
+//Empty::=
 bool Empty(void){
 	if (current == VIDE){
 		return true;
@@ -721,7 +721,7 @@ bool Empty(void){
 	}
 }
 
-//<caseLabelList> ::= <Constant> {, <Constant> }
+//CaseLabelList ::= Constant {, Constant }
 void CaseLabeList(void){
 	Const();
 	while(current==COMMA){
@@ -730,7 +730,7 @@ void CaseLabeList(void){
 	}
 }
 
-//<caseListElement> ::= <case label list> : <statement> | <empty>
+//CaseListElement ::= CaseLabelList : statement | empty
 void CaseListElement(void){
     if (Empty()) return;
     CaseLabeList();
@@ -742,7 +742,7 @@ void CaseListElement(void){
     }
 }
 
-//CaseStatement ::= CASE <expression> OF <case list element> {; <case list element>} END
+//CaseStatement ::= CASE expression OF CaseListElement {; CaseListElement} END
 void CaseStatement(void){
     if (current != CASE){
         Error("CASE requis");
@@ -816,7 +816,7 @@ void CaseStatement(void){
     current=(TOKEN) lexer->yylex();
 }
 
-//<RepeatStatement> ::= REPEAT <statement> {; <statement>} UNTIL <expression>
+//RepeatStatement ::= REPEAT statement {; statement} UNTIL expression
 void RepeatStatement(void){
     unsigned long tag = ++TagNumber;
     if (current != REPEAT) Error("REPEAT requis");
@@ -839,8 +839,7 @@ void RepeatStatement(void){
 	cout << "RepeatEnd" << tag << ":" << endl;
 }
 
-
-//Statement := AssignementStatement | IfStatement | WhileStatement | ForStatement | BlockStatement | DisplayStatement | VarDeclarationPart | CaseStatement | RepeatStatement | DoWhileStatement
+//Statement := AssignementStatement | IfStatement | WhileStatement | ForStatement | BlockStatement | DisplayStatement | VarDeclarationPart | CaseStatement | RepeatStatement | DoWhileStatement | Comment
 void Statement(void){
 	if (current == ID){
 		AssignementStatement();
@@ -888,7 +887,7 @@ void Program(void){
         DeclarationPart();
 	if(current == VAR)
         VarDeclarationPart();
-    StatementPart();	
+    StatementPart();
 }
 
 int main(void){	// First version : Source code on standard input and assembly code on standard output

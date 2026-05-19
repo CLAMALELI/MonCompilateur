@@ -577,9 +577,9 @@ static const flex_int16_t yy_rule_linenum[42] =
     {   0,
        36,   37,   38,   39,   40,   41,   42,   43,   44,   45,
        46,   47,   48,   49,   50,   51,   52,   53,   54,   55,
-       56,   58,   59,   60,   61,   62,   63,   64,   65,   66,
-       67,   68,   69,   70,   71,   72,   73,   74,   76,   77,
-       89
+       56,   59,   60,   61,   62,   63,   64,   65,   66,   67,
+       68,   69,   70,   71,   72,   73,   74,   75,   78,   79,
+       91
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -997,102 +997,102 @@ return DOWNTO;
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 58 "tokeniser.l"
+#line 59 "tokeniser.l"
 return CHARCONST;
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 59 "tokeniser.l"
+#line 60 "tokeniser.l"
 return ADDOP;
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 60 "tokeniser.l"
+#line 61 "tokeniser.l"
 return MULOP;
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 61 "tokeniser.l"
+#line 62 "tokeniser.l"
 return RELOP;
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 62 "tokeniser.l"
+#line 63 "tokeniser.l"
 return NUMBER;
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 63 "tokeniser.l"
+#line 64 "tokeniser.l"
 return ID;
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 64 "tokeniser.l"
+#line 65 "tokeniser.l"
 return STRINGCONST;
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 65 "tokeniser.l"
+#line 66 "tokeniser.l"
 return RBRACKET;
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 66 "tokeniser.l"
+#line 67 "tokeniser.l"
 return LBRACKET;
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 67 "tokeniser.l"
+#line 68 "tokeniser.l"
 return COMMA;
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 68 "tokeniser.l"
+#line 69 "tokeniser.l"
 return SEMICOLON;
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 69 "tokeniser.l"
+#line 70 "tokeniser.l"
 return DOT;
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 70 "tokeniser.l"
+#line 71 "tokeniser.l"
 return ASSIGN;
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 71 "tokeniser.l"
+#line 72 "tokeniser.l"
 return COLON;
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 72 "tokeniser.l"
+#line 73 "tokeniser.l"
 return RPARENT;
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 73 "tokeniser.l"
+#line 74 "tokeniser.l"
 return LPARENT;
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 74 "tokeniser.l"
+#line 75 "tokeniser.l"
 return NOT;
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 75 "tokeniser.l"
+#line 77 "tokeniser.l"
 return FEOF;
 	YY_BREAK
 case 39:
 /* rule 39 can match eol */
 YY_RULE_SETUP
-#line 76 "tokeniser.l"
+#line 78 "tokeniser.l"
 {/* skip blanks and tabs */};
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 77 "tokeniser.l"
+#line 79 "tokeniser.l"
 { /* Skip comments between '(*' and '*)' */
 		int c;
 		while((c = yyinput()) != 0){
@@ -1107,12 +1107,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 89 "tokeniser.l"
+#line 91 "tokeniser.l"
 return UNKNOWN;
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 91 "tokeniser.l"
+#line 93 "tokeniser.l"
 ECHO;
 	YY_BREAK
 #line 1119 "tokeniser.cpp"
@@ -2239,7 +2239,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 91 "tokeniser.l"
+#line 93 "tokeniser.l"
 
 
 

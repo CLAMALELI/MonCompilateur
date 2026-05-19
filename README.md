@@ -34,22 +34,42 @@ To : 64 bit 80x86 assembly langage (AT&T)
 
 **This version Can handle :**
 
-// Program := [DeclarationPart] StatementPart
+// Program := [DeclarationPart] [VarDeclarationPart] StatementPart
 // DeclarationPart := "[" Identifier {"," Identifier} "]"
-// StatementPart := Statement {";" Statement} "."
-// Statement := AssignementStatement
-// AssignementStatement := Identifier ":=" Expression
+// VarDeclarationPart := "VAR" VarDeclaration {";" VarDeclaration} "."
+// VarDeclaration := Identifier {"," Identifier} ":" Type
+
+// Type := "INTEGER" | "BOOLEAN" | "DOUBLE" | "CHAR" | "STRING"
+// AdditiveOperator := "+" | "-" | "||"
+// MultiplicativeOperator := "*" | "/" | "%" | "&&"
+// RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="
+// empty ::=
+// Digit := "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"
+// Letter := "a"|...|"z"|"A"|...|"Z"
+
+// Number := Digit{Digit} | Digit{Digit}"."Digit{Digit}
+// Identifier := Letter {(Letter|Digit)}
+// Const := Number | CharConst | StringConst
 
 // Expression := SimpleExpression [RelationalOperator SimpleExpression]
 // SimpleExpression := Term {AdditiveOperator Term}
 // Term := Factor {MultiplicativeOperator Factor}
-// Factor := Number | Letter | "(" Expression ")"| "!" Factor
-// Number := Digit{Digit}
-// Identifier := Letter {(Letter|Digit)}
+// Factor := Number | Identifier | "(" Expression ")" | CharConst | StringConst
 
-// AdditiveOperator := "+" | "-" | "||"
-// MultiplicativeOperator := "*" | "/" | "%" | "&&"
-// RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="  
-// Digit := "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"
-// Letter := "a"|...|"z"
+// StatementPart := Statement {";" Statement} "."
+// Statement := AssignementStatement | IfStatement | WhileStatement | DoWhileStatement
+//            | ForStatement | BlockStatement | DisplayStatement | CaseStatement | RepeatStatement
+// AssignementStatement := Identifier ":=" Expression
+// IfStatement := "IF" Expression "THEN" Statement ["ELSE" Statement]
+// WhileStatement := "WHILE" Expression "DO" Statement
+// DoWhileStatement := "DO" Statement "WHILE" Expression
+// ForStatement := "FOR" AssignementStatement "TO" Expression "DO" Statement
+//               | "FOR" AssignementStatement "DOWNTO" Expression "DO" Statement
+// BlockStatement := "BEGIN" Statement {";" Statement} "END"
+// DisplayStatement := "DISPLAY" Expression
+// CaseStatement := "CASE" Expression "OF" CaseListElement {";" CaseListElement} "END"
+// CaseListElement := CaseLabelList ":" Statement | empty
+// CaseLabelList := Const {"," Const}
+// RepeatStatement := "REPEAT" Statement {";" Statement} "UNTIL" Expression
+
 
